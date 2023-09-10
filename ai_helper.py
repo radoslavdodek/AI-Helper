@@ -1,48 +1,155 @@
-#!/usr/bin/python3
 import errno
-import logging.handlers
-import logging.handlers
 import sys
+import threading
 
-import PySimpleGUI as sg
+import customtkinter
 import openai
 import pyperclip
+from customtkinter import CTkFont
 
-logger = logging.getLogger('ai_helper')
-logger.setLevel(logging.DEBUG)
-handler = logging.handlers.SysLogHandler(address='/dev/log')
-logger.addHandler(handler)
-
-
-def ui_execute_rewrite(text_to_rewrite):
-    # Execute the prompt
-    prompt = f"Please rewrite the following text for more clarity and make it grammatically correct. Give me the " \
-             f"updated text. The updated text should be correct grammatically and stylistically and should be easy to " \
-             f"follow and understand. Don't make it too formal. Include only improved text no other " \
-             f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
-
-    completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo", temperature=0.9,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    result = completion.choices[0].message.content
-
-    window['-GENERATED_TEXT-'].update(result)
-    pyperclip.copy(result)
-
-    window['-INFO_LABEL-'].update('Copied into the clipboard')
+customtkinter.set_appearance_mode("System")
+customtkinter.set_default_color_theme("blue")
 
 
-def ui_execute_ask_question(question):
-    logger.info(f'ai_helper: Asking question: {question}')
+class App(customtkinter.CTk):
+    MAX_SIZE = 1000
 
-    # Execute the prompt
-    completion = openai.ChatCompletion.create(model="gpt-4", messages=[{"role": "user", "content": question}])
-    result = completion.choices[0].message.content
+    def __init__(self):
+        super().__init__()
 
-    logger.info(f'ai_helper: Answer arrived')
+        self.SUPPORTED_ACTIONS = {
+            "Rewrite": self.ui_execute_rewrite,
+            "Ask": self.execute_ask_question
+        }
 
-    window['-GENERATED_TEXT-'].update(result)
+        if len(sys.argv) < 2:
+            print("Missing parameter ACTION")
+            self.help()
+            sys.exit(errno.EPERM)
+
+        self.action = sys.argv[1]
+        if self.SUPPORTED_ACTIONS.get(self.action) is None:
+            print('Unsupported action:', self.action)
+            self.help()
+            sys.exit(errno.EPERM)
+
+        # UI
+        monospace_font = CTkFont(family="monospace", size=16, weight="normal")
+
+        # configure window
+        self.title("AI Helper")
+        self.geometry(f"{1000}x{700}")
+
+        # configure grid layout
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+
+        self.textbox_question = customtkinter.CTkTextbox(self, font=monospace_font, height=150)
+        self.textbox_question.grid(row=0, column=0, columnspan=2, sticky="nsew")
+
+        # Question button
+        self.answer_button = customtkinter.CTkButton(master=self, text="Ask", command=self.answer_button_event)
+        self.answer_button.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+
+        # Label
+        self.info_label = customtkinter.CTkLabel(self, text="", font=customtkinter.CTkFont(size=14, weight="bold"))
+        self.info_label.grid(row=1, column=1, padx=20, pady=(5, 5))
+
+        # Answer textbox
+        self.textbox_answer = customtkinter.CTkTextbox(self, font=monospace_font)
+        self.textbox_answer.grid(row=2, column=0, columnspan=2, sticky="nsew")
+
+        # Initialize
+        self.question = pyperclip.paste()
+        if self.action == 'Ask':
+            self.question = 'Explain: ' + self.question
+        self.textbox_question.insert("0.0", self.question)
+        self.textbox_question.focus_set()
+
+        # Bind keyboard shortcuts
+        self.textbox_question.bind('<Control_L><Return>', lambda event: self.answer_button_event())
+        self.textbox_question.bind('<Escape>', lambda event: self.quit())
+        self.textbox_answer.bind('<Escape>', lambda event: self.quit())
+
+        # Initial execution at the startup
+        if self.action == 'Rewrite' and self.question is not None:
+            self.answer_button_event()
+            # self.SUPPORTED_ACTIONS[self.action](self.clip_text(str(self.question), self.MAX_SIZE))
+
+    def help(self):
+        print("Usage:")
+        print(" ", sys.argv[0], "<ACTION>")
+        print(" Supported actions: Rewrite, Ask")
+
+    def answer_button_event(self):
+        self.set_working_state('Working...')
+        self.execute_in_thread(lambda: self.SUPPORTED_ACTIONS[self.action](
+            self.clip_text(str(self.textbox_question.get("0.0", "end")), self.MAX_SIZE)), ())
+
+    def set_working_state(self, message):
+        self.textbox_question.configure(state='disabled')
+        self.answer_button.configure(state='disabled')
+        self.info_label.configure(text=message)
+
+    def unset_working_state(self, message):
+        self.textbox_question.configure(state='normal')
+        self.answer_button.configure(state='normal')
+        self.info_label.configure(text=message)
+
+    def quit(self):
+        self.destroy()
+
+    def ui_execute_rewrite(self, text_to_rewrite):
+        # Execute the prompt
+        prompt = f"Please rewrite the following text for more clarity and make it grammatically correct. Give me the " \
+                 f"updated text. The updated text should be correct grammatically and stylistically and should be easy to " \
+                 f"follow and understand. Don't make it too formal. Include only improved text no other " \
+                 f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
+
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo", temperature=0.9,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        result = completion.choices[0].message.content
+
+        self.textbox_answer.delete("0.0", "end")
+        self.textbox_answer.insert("0.0", result)
+
+        pyperclip.copy(result)
+        self.unset_working_state('Copied to clipboard')
+
+    def execute_ask_question(self, question):
+        print("Asking question:", question)
+        # Execute the prompt
+        completion = openai.ChatCompletion.create(model="gpt-4", messages=[{"role": "user", "content": question}])
+        result = completion.choices[0].message.content
+
+        self.textbox_answer.delete("0.0", "end")
+        self.textbox_answer.insert("0.0", result)
+
+        self.info_label.configure(text='')
+        self.unset_working_state('')
+
+    def clip_text(self, text, max_size):
+        if text is None:
+            return None
+
+        if len(text) > max_size:
+            return text[:max_size].strip()
+        else:
+            return text.strip()
+
+    def execute_in_thread(self, callback, args):
+        thread = threading.Thread(target=callback, args=args)
+        thread.start()
+
+    def delayed_execution(self, callback, delay_in_sec):
+        timer = threading.Timer(delay_in_sec, callback)
+        timer.start()
+
+    def notify_copied_to_clipboard(self):
+        self.info_label.configure(text='Copied into the clipboard')
+        self.delayed_execution(lambda: self.info_label.configure(text=''), 2)
 
 
 # Check the parameter
@@ -50,82 +157,29 @@ def ui_execute_ask_question(question):
 # - "rewrite"
 # - "ask"
 
-def help():
-    print("Usage:")
-    print(" ", sys.argv[0], "<ACTION>")
-    print(" Supported actions: Rewrite, Ask")
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()
 
-
-SUPPORTED_ACTIONS = {
-    "Rewrite": ui_execute_rewrite,
-    "Ask": ui_execute_ask_question
-}
-
-action = sys.argv[1]
-logger.info(f'Action: {action}')
-if SUPPORTED_ACTIONS.get(action) is None:
-    print('Unsupported action:', action)
-    help()
-    sys.exit(errno.EPERM)
-
-MAX_SIZE = 1000
-
-
-def clip_text(text, max_size):
-    if text is None:
-        return None
-
-    if len(text) > max_size:
-        return text[:max_size].strip()
-    else:
-        return text.strip()
-
-
-sg.theme('Default1')
-
-original_text = pyperclip.paste()
-if action == 'Ask':
-    original_text = 'Explain: ' + original_text
-
-layout = [
-    # Row 1
-    [sg.Multiline(clip_text(original_text, MAX_SIZE), size=(100, 10), font='Courier 12', expand_x=True, expand_y=True,
-                  key='-ORIGINAL_TEXT-')],
-    # Row 2
-    [sg.Multiline(size=(100, 30), font='Courier 12', expand_x=True, expand_y=True, key='-GENERATED_TEXT-')],
-    # Row 3
-    [sg.Button(action, key='-BTN_TRANSLATE-', expand_x=True), sg.Text('', key='-INFO_LABEL-'), sg.Button('Copy'),
-     sg.Button('Cancel')]
-]
-
-window = sg.Window('AI helper', layout, default_element_size=(100, 50), finalize=True, use_ttk_buttons=True,
-                   resizable=True, grab_anywhere=True)
-window["-ORIGINAL_TEXT-"].bind("<Control_L><Return>", "CTRL_ENTER")
-window["-ORIGINAL_TEXT-"].bind("<Escape>", "ESCAPE")
-window["-GENERATED_TEXT-"].bind("<Escape>", "ESCAPE")
-
-# Initial execution at the startup
-if action == 'Rewrite' and original_text is not None:
-    event, values = window.read(0)
-    SUPPORTED_ACTIONS[action](clip_text(str(original_text), MAX_SIZE))
-
-# Event Loop to process "events" and get the "values" of the inputs
-while True:
-    event, values = window.read()
-    if (
-            event == sg.WIN_CLOSED or
-            event == 'Cancel' or
-            event == '-ORIGINAL_TEXT-ESCAPE' or
-            event == '-GENERATED_TEXT-ESCAPE'
-    ):
-        break
-
-    if event == 'Copy':
-        pyperclip.copy(values['-GENERATED_TEXT-'])
-        window['-INFO_LABEL-'].update('Copied into the clipboard')
-
-    else:
-        original_text = values['-ORIGINAL_TEXT-']
-        SUPPORTED_ACTIONS[action](original_text)
-
-window.close()
+#
+#
+# # Event Loop to process "events" and get the "values" of the inputs
+# while True:
+#     event, values = window.read()
+#     if (
+#             event == sg.WIN_CLOSED or
+#             event == 'Cancel' or
+#             event == '-ORIGINAL_TEXT-ESCAPE' or
+#             event == '-GENERATED_TEXT-ESCAPE'
+#     ):
+#         break
+#
+#     if event == 'Copy':
+#         pyperclip.copy(values['-GENERATED_TEXT-'])
+#         window['-INFO_LABEL-'].update('Copied into the clipboard')
+#
+#     else:
+#         original_text = values['-ORIGINAL_TEXT-']
+#         SUPPORTED_ACTIONS[action](original_text)
+#
+# window.close()

@@ -30,8 +30,7 @@ This feature takes the content of the clipboard and puts it into the question fi
 Explain: <CLIPBOARD_CONTENT>
 ```
 
-To send this question to OpenAI, simply press `Ctrl+Enter`. The answer will be displayed in the user interface and
-copied to your clipboard.
+To send this question to OpenAI, simply press `Ctrl+Enter`. The answer will be displayed in the user interface.
 
 | Name           | Suggested shortcut   | Command                    | Description               |
 |----------------|----------------------|----------------------------|---------------------------|
