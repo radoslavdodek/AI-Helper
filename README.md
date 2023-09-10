@@ -29,7 +29,7 @@ Open _Settings -> Keyboard Shortcuts -> Custom Shortcuts_ and create the followi
 
 ### Rewrite text
 
-This feature automatically rewrites any text currently in the clipboard.
+This feature automatically rewrites any text currently in the clipboard to improve clarity and grammar.
 The newly rewritten text will be displayed in the user interface and then placed back into the clipboard.
 
 | Name               | Suggested shortcut   | Command                        | Description                   |
