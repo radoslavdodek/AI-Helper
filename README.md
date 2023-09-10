@@ -24,7 +24,7 @@ The newly rewritten text will be displayed in the user interface and then placed
 
 ### Ask question
 
-This feature takes the content of the clipboard and puts it into the question field of the form below:
+This feature takes the content of the clipboard and puts it into the question field in the following format:
 
 ```
 Explain: <CLIPBOARD_CONTENT>
