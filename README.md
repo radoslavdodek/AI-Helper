@@ -22,7 +22,9 @@ pip3 install -r requirements.txt
 
 ## Setup global hotkeys in Ubuntu
 
-Open Settings -> Keyboard Shortcuts -> Custom Shortcuts
+This application is designed to work with global hotkeys. To set it up in Ubuntu, simply follow these steps:
+
+Open _Settings -> Keyboard Shortcuts -> Custom Shortcuts_ and create the following shortcuts:
 
 ### Rewrite text
 
