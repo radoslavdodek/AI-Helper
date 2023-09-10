@@ -58,7 +58,7 @@ class App(customtkinter.CTk):
         self.textbox_question.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
         # Question button
-        self.answer_button = customtkinter.CTkButton(master=self, text="Ask", command=self.answer_button_event)
+        self.answer_button = customtkinter.CTkButton(master=self, text=self.action, command=self.answer_button_event)
         self.answer_button.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
         # Label
