@@ -1,13 +1,14 @@
 import errno
 import sys
+import threading
 
 import customtkinter
 import openai
 import pyperclip
 from customtkinter import CTkFont
 
-customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
-customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
+customtkinter.set_appearance_mode("System")
+customtkinter.set_default_color_theme("blue")
 
 
 class App(customtkinter.CTk):
@@ -18,7 +19,7 @@ class App(customtkinter.CTk):
 
         self.SUPPORTED_ACTIONS = {
             "Rewrite": self.ui_execute_rewrite,
-            "Ask": self.ui_execute_ask_question
+            "Ask": self.execute_ask_question
         }
 
         if len(sys.argv) < 2:
@@ -41,10 +42,9 @@ class App(customtkinter.CTk):
 
         # configure grid layout
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=5)
+        self.grid_rowconfigure(2, weight=1)
 
-        self.textbox_question = customtkinter.CTkTextbox(self, font=monospace_font)
+        self.textbox_question = customtkinter.CTkTextbox(self, font=monospace_font, height=150)
         self.textbox_question.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
         # Question button
@@ -58,7 +58,6 @@ class App(customtkinter.CTk):
         # Answer textbox
         self.textbox_answer = customtkinter.CTkTextbox(self, font=monospace_font)
         self.textbox_answer.grid(row=2, column=0, columnspan=2, sticky="nsew")
-        self.textbox_answer.insert("0.0", "Some answer goes here.")
 
         # Initialize
         self.question = pyperclip.paste()
@@ -74,7 +73,8 @@ class App(customtkinter.CTk):
 
         # Initial execution at the startup
         if self.action == 'Rewrite' and self.question is not None:
-            self.SUPPORTED_ACTIONS[self.action](self.clip_text(str(self.question), self.MAX_SIZE))
+            self.answer_button_event()
+            # self.SUPPORTED_ACTIONS[self.action](self.clip_text(str(self.question), self.MAX_SIZE))
 
     def help(self):
         print("Usage:")
@@ -82,8 +82,19 @@ class App(customtkinter.CTk):
         print(" Supported actions: Rewrite, Ask")
 
     def answer_button_event(self):
-        print("Answer button clicked")
-        self.SUPPORTED_ACTIONS[self.action](self.clip_text(str(self.question), self.MAX_SIZE))
+        self.set_working_state('Working...')
+        self.execute_in_thread(lambda: self.SUPPORTED_ACTIONS[self.action](
+            self.clip_text(str(self.textbox_question.get("0.0", "end")), self.MAX_SIZE)), ())
+
+    def set_working_state(self, message):
+        self.textbox_question.configure(state='disabled')
+        self.answer_button.configure(state='disabled')
+        self.info_label.configure(text=message)
+
+    def unset_working_state(self, message):
+        self.textbox_question.configure(state='normal')
+        self.answer_button.configure(state='normal')
+        self.info_label.configure(text=message)
 
     def quit(self):
         self.destroy()
@@ -103,11 +114,11 @@ class App(customtkinter.CTk):
 
         self.textbox_answer.delete("0.0", "end")
         self.textbox_answer.insert("0.0", result)
+
         pyperclip.copy(result)
+        self.unset_working_state('Copied to clipboard')
 
-        self.info_label.configure(text='Copied into the clipboard')
-
-    def ui_execute_ask_question(self, question):
+    def execute_ask_question(self, question):
         print("Asking question:", question)
         # Execute the prompt
         completion = openai.ChatCompletion.create(model="gpt-4", messages=[{"role": "user", "content": question}])
@@ -115,6 +126,9 @@ class App(customtkinter.CTk):
 
         self.textbox_answer.delete("0.0", "end")
         self.textbox_answer.insert("0.0", result)
+
+        self.info_label.configure(text='')
+        self.unset_working_state('')
 
     def clip_text(self, text, max_size):
         if text is None:
@@ -124,6 +138,18 @@ class App(customtkinter.CTk):
             return text[:max_size].strip()
         else:
             return text.strip()
+
+    def execute_in_thread(self, callback, args):
+        thread = threading.Thread(target=callback, args=args)
+        thread.start()
+
+    def delayed_execution(self, callback, delay_in_sec):
+        timer = threading.Timer(delay_in_sec, callback)
+        timer.start()
+
+    def notify_copied_to_clipboard(self):
+        self.info_label.configure(text='Copied into the clipboard')
+        self.delayed_execution(lambda: self.info_label.configure(text=''), 2)
 
 
 # Check the parameter
