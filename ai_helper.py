@@ -118,9 +118,11 @@ class App(customtkinter.CTk):
         self.unset_working_state('Copied to clipboard')
 
     def execute_ask_question(self, question):
-        print("Asking question:", question)
         # Execute the prompt
-        completion = openai.ChatCompletion.create(model="gpt-4", messages=[{"role": "user", "content": question}])
+        completion = openai.ChatCompletion.create(
+            model="gpt-4", temperature=0,
+            messages=[{"role": "user", "content": question}]
+        )
         result = completion.choices[0].message.content
 
         self.textbox_answer.delete("0.0", "end")
