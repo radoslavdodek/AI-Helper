@@ -1,6 +1,8 @@
 import errno
 import sys
 import threading
+from pathlib import Path
+from tkinter import PhotoImage
 
 import customtkinter
 import openai
@@ -21,7 +23,7 @@ class App(customtkinter.CTk):
     MAX_SIZE = 1000
 
     def __init__(self):
-        super().__init__()
+        super().__init__(className="AI Helper")
 
         self.SUPPORTED_ACTIONS = {
             "Rewrite": self.ui_execute_rewrite,
@@ -45,6 +47,8 @@ class App(customtkinter.CTk):
         # configure window
         self.title("AI Helper")
         self.geometry(f"{1000}x{700}")
+        root_dir = Path(__file__).resolve().parent
+        self.iconphoto(False, PhotoImage(file=root_dir / "assets/app-icon.png"))
 
         # configure grid layout
         self.grid_columnconfigure(0, weight=1)
