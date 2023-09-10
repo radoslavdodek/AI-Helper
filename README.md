@@ -9,7 +9,7 @@ and then press the global hotkey. The answer will automatically be copied back t
 When you're using the application, simply press `Ctrl+Enter` on question field to get the answer.
 If you want to exit the application, just press `ESC`.
 
-## Setup global hotkeys on Ubuntu
+## Setup global hotkeys in Ubuntu
 
 Open Settings -> Keyboard Shortcuts -> Custom Shortcuts
 
