@@ -21,7 +21,10 @@ def ui_execute_rewrite(text_to_rewrite):
              f"follow and understand. Don't make it too formal. Include only improved text no other " \
              f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
 
-    completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}])
+    completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo", temperature=0.9,
+        messages=[{"role": "user", "content": prompt}]
+    )
     result = completion.choices[0].message.content
 
     window['-GENERATED_TEXT-'].update(result)
@@ -99,6 +102,7 @@ window = sg.Window('AI helper', layout, default_element_size=(100, 50), finalize
                    resizable=True, grab_anywhere=True)
 window["-ORIGINAL_TEXT-"].bind("<Control_L><Return>", "CTRL_ENTER")
 window["-ORIGINAL_TEXT-"].bind("<Escape>", "ESCAPE")
+window["-GENERATED_TEXT-"].bind("<Escape>", "ESCAPE")
 
 # Initial execution at the startup
 if action == 'Rewrite' and original_text is not None:
@@ -108,7 +112,12 @@ if action == 'Rewrite' and original_text is not None:
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
     event, values = window.read()
-    if event == sg.WIN_CLOSED or event == 'Cancel' or event == '-ORIGINAL_TEXT-ESCAPE':
+    if (
+            event == sg.WIN_CLOSED or
+            event == 'Cancel' or
+            event == '-ORIGINAL_TEXT-ESCAPE' or
+            event == '-GENERATED_TEXT-ESCAPE'
+    ):
         break
 
     if event == 'Copy':

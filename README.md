@@ -2,8 +2,9 @@
 
 Simple AI helper utility for daily tasks.
 
-This utility is designed to be used with global hotkeys, allowing you to easily and quickly receive the answer
-you are looking for.
+This utility is designed to be used with global hotkeys, making it easy and quick for you to get the answer
+you're looking for. By utilizing the clipboard, you can easily copy the text you want to rewrite or ask about, 
+and then press the global hotkey. The answer will automatically be copied back to the clipboard for your convenience.
 
 When you're using the application, simply press `Ctrl+Enter` on the original text input field to get the answer.
 If you want to exit the application, just press `ESC`.
