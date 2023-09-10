@@ -2,10 +2,13 @@
 
 Simple AI helper utility for daily tasks.
 
-This utility is designed to be used with hotkeys, allowing you to easily and quickly receive the answer you are looking
-for.
+This utility is designed to be used with global hotkeys, allowing you to easily and quickly receive the answer
+you are looking for.
 
-## Setup hotkeys on Ubuntu
+When you're using the application, simply press `Ctrl+Enter` on the original text input field to get the answer.
+If you want to exit the application, just press `ESC`.
+
+## Setup global hotkeys on Ubuntu
 
 Open Settings -> Keyboard Shortcuts -> Custom Shortcuts
 
