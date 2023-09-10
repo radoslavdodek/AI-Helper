@@ -77,14 +77,17 @@ class App(customtkinter.CTk):
         self.textbox_question.focus_set()
 
         # Bind keyboard shortcuts
-        self.textbox_question.bind('<Control_L><Return>', lambda event: self.answer_button_event())
+        self.textbox_question.bind(
+            '<Control_L><Return>',
+            # Return value "break" means that the event should not be processed by the default handler
+            lambda event: "break" if self.answer_button_event() is None else None
+        )
         self.textbox_question.bind('<Escape>', lambda event: self.quit())
         self.textbox_answer.bind('<Escape>', lambda event: self.quit())
 
         # Initial execution at the startup
         if self.action == 'Rewrite' and self.question is not None:
             self.answer_button_event()
-            # self.SUPPORTED_ACTIONS[self.action](self.clip_text(str(self.question), self.MAX_SIZE))
 
     def answer_button_event(self):
         self.set_working_state('Working...')
