@@ -9,6 +9,17 @@ and then press the global hotkey. The answer will automatically be copied back t
 When you're using the application, simply press `Ctrl+Enter` on question field to get the answer.
 If you want to exit the application, just press `ESC`.
 
+## Pre-requisites
+
+- Python 3.6 or higher
+- OpenAI API key. Set the key in the `OPENAI_API_KEY` environment variable.
+
+## Install dependencies
+
+```bash
+pip3 install -r requirements.txt
+```
+
 ## Setup global hotkeys in Ubuntu
 
 Open Settings -> Keyboard Shortcuts -> Custom Shortcuts
