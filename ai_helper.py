@@ -26,7 +26,7 @@ class App(customtkinter.CTk):
         super().__init__(className="AI Helper")
 
         self.SUPPORTED_ACTIONS = {
-            "Rewrite": self.ui_execute_rewrite,
+            "Rewrite": self.execute_rewrite,
             "Ask": self.execute_ask_question
         }
 
@@ -105,7 +105,7 @@ class App(customtkinter.CTk):
     def quit(self):
         self.destroy()
 
-    def ui_execute_rewrite(self, text_to_rewrite):
+    def execute_rewrite(self, text_to_rewrite):
         # Execute the prompt
         prompt = f"Please rewrite the following text for more clarity and make it grammatically correct. Give me the " \
                  f"updated text. The updated text should be correct grammatically and stylistically and should be " \
