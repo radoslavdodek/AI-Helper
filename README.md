@@ -18,7 +18,7 @@ Open Settings -> Keyboard Shortcuts -> Custom Shortcuts
 This feature automatically rewrites any text currently in the clipboard.
 The newly rewritten text will be displayed in the user interface and then placed back into the clipboard.
 
-| Name               | Shortcut             | Command                        | Description                   |
+| Name               | Suggested shortcut   | Command                        | Description                   |
 |--------------------|----------------------|--------------------------------|-------------------------------|
 | AI Helper: Rewrite | `Ctrl+Alt+Shift+F10` | `python3 ai_helper.py Rewrite` | Rewrite text using AI helper. |
 
@@ -33,7 +33,7 @@ Explain: <CLIPBOARD_CONTENT>
 To send this question to OpenAI, simply press `Ctrl+Enter`. The answer will be displayed in the user interface and
 copied to your clipboard.
 
-| Name           | Shortcut             | Command                    | Description               |
+| Name           | Suggested shortcut   | Command                    | Description               |
 |----------------|----------------------|----------------------------|---------------------------|
 | AI Helper: Ask | `Ctrl+Alt+Shift+F11` | `python3 ai_helper.py Ask` | Ask AI helper a question. |
 
