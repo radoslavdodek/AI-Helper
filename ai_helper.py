@@ -47,8 +47,8 @@ class App(customtkinter.CTk):
         # configure window
         self.title("AI Helper")
         self.geometry(f"{1000}x{700}")
-        root_dir = Path(__file__).resolve().parent
-        self.iconphoto(False, PhotoImage(file=root_dir / "assets/app-icon.png"))
+        self.app_path = Path(__file__).resolve().parent
+        self.iconphoto(False, PhotoImage(file=self.app_path / "assets/app-icon.png"))
 
         # configure grid layout
         self.grid_columnconfigure(0, weight=1)
@@ -113,7 +113,7 @@ class App(customtkinter.CTk):
                  f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
 
         completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo", temperature=0.9,
+            model="gpt-4", temperature=0.9,
             messages=[{"role": "user", "content": prompt}]
         )
         result = completion.choices[0].message.content
@@ -123,6 +123,8 @@ class App(customtkinter.CTk):
 
         pyperclip.copy(result)
         self.unset_working_state('Copied to clipboard')
+
+        self.store_to_file('Rewrite', text_to_rewrite, result)
 
     def execute_ask_question(self, question):
         # Execute the prompt
@@ -137,6 +139,15 @@ class App(customtkinter.CTk):
 
         self.info_label.configure(text='')
         self.unset_working_state('')
+
+        self.store_to_file('Question', question, result)
+
+    def store_to_file(self, type, content, answer):
+        log_file = self.app_path / "ai_helper.log"
+
+        with open(log_file, 'a') as f:
+            f.write(f'{type}: {content}\n')
+            f.write(f'Answer: {answer}\n---\n')
 
     @staticmethod
     def clip_text(text, max_size):
