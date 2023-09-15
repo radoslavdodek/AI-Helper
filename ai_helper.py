@@ -1,6 +1,7 @@
 import errno
 import sys
 import threading
+from datetime import datetime
 from pathlib import Path
 from tkinter import PhotoImage
 
@@ -24,6 +25,7 @@ class App(customtkinter.CTk):
 
     def __init__(self):
         super().__init__(className="AI Helper")
+        self.app_path = Path(__file__).resolve().parent
 
         self.SUPPORTED_ACTIONS = {
             "Rewrite": self.execute_rewrite,
@@ -47,7 +49,6 @@ class App(customtkinter.CTk):
         # configure window
         self.title("AI Helper")
         self.geometry(f"{1000}x{700}")
-        self.app_path = Path(__file__).resolve().parent
         self.iconphoto(False, PhotoImage(file=self.app_path / "assets/app-icon.png"))
 
         # configure grid layout
@@ -124,7 +125,7 @@ class App(customtkinter.CTk):
         pyperclip.copy(result)
         self.unset_working_state('Copied to clipboard')
 
-        self.store_to_file('Rewrite', text_to_rewrite, result)
+        self.log_to_file('Rewrite', text_to_rewrite, result)
 
     def execute_ask_question(self, question):
         # Execute the prompt
@@ -140,13 +141,14 @@ class App(customtkinter.CTk):
         self.info_label.configure(text='')
         self.unset_working_state('')
 
-        self.store_to_file('Question', question, result)
+        self.log_to_file('Question', question, result)
 
-    def store_to_file(self, type, content, answer):
+    def log_to_file(self, input_type, content, answer):
         log_file = self.app_path / "ai_helper.log"
-
         with open(log_file, 'a') as f:
-            f.write(f'{type}: {content}\n')
+            current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f'Date: {current_date}\n')
+            f.write(f'{input_type}: {content}\n')
             f.write(f'Answer: {answer}\n---\n')
 
     @staticmethod
