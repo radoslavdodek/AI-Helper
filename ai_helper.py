@@ -110,11 +110,12 @@ class App(customtkinter.CTk):
         # Execute the prompt
         prompt = f"Please rewrite the following text for more clarity and make it grammatically correct. Give me the " \
                  f"updated text. The updated text should be correct grammatically and stylistically and should be " \
-                 f"easy to follow and understand. Don't make it too formal. Include only improved text no other " \
+                 f"easy to follow and understand. Only make a change if it's needed. " \
+                 f"Don't make it too formal. Include only improved text no other " \
                  f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
 
         completion = openai.ChatCompletion.create(
-            model="gpt-4", temperature=0.9,
+            model="gpt-4", temperature=1,
             messages=[{"role": "user", "content": prompt}]
         )
         result = completion.choices[0].message.content
