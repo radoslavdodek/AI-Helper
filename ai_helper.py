@@ -13,6 +13,8 @@ from customtkinter import CTkFont
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("blue")
 
+#
+default_model = 'gpt-4-1106-preview'
 
 def app_help():
     print("Usage:")
@@ -115,7 +117,7 @@ class App(customtkinter.CTk):
                  f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
 
         completion = openai.ChatCompletion.create(
-            model="gpt-4", temperature=1,
+            model=default_model, temperature=1,
             messages=[{"role": "user", "content": prompt}]
         )
         result = completion.choices[0].message.content
@@ -131,7 +133,7 @@ class App(customtkinter.CTk):
     def execute_ask_question(self, question):
         # Execute the prompt
         completion = openai.ChatCompletion.create(
-            model="gpt-4", temperature=0,
+            model=default_model, temperature=0,
             messages=[{"role": "user", "content": question}]
         )
         result = completion.choices[0].message.content
