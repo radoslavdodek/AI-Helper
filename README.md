@@ -12,7 +12,7 @@ If you want to exit the application, just press `ESC`.
 
 ## Pre-requisites
 
-- Python 3.6 or higher
+- Python 3.7.1 or higher
 - OpenAI API key. Set the key in the `OPENAI_API_KEY` environment variable.
 
 ## Install dependencies
