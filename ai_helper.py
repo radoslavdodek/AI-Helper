@@ -6,15 +6,18 @@ from pathlib import Path
 from tkinter import PhotoImage
 
 import customtkinter
-import openai
 import pyperclip
 from customtkinter import CTkFont
+from openai import OpenAI
+
+client = OpenAI()
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("blue")
 
 #
 default_model = 'gpt-4-1106-preview'
+
 
 def app_help():
     print("Usage:")
@@ -116,7 +119,7 @@ class App(customtkinter.CTk):
                  f"Don't make it too formal. Include only improved text no other " \
                  f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
 
-        completion = openai.ChatCompletion.create(
+        completion = client.chat.completions.create(
             model=default_model, temperature=1,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -132,7 +135,7 @@ class App(customtkinter.CTk):
 
     def execute_ask_question(self, question):
         # Execute the prompt
-        completion = openai.ChatCompletion.create(
+        completion = client.chat.completions.create(
             model=default_model, temperature=0,
             messages=[{"role": "user", "content": question}]
         )
