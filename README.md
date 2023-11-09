@@ -1,5 +1,7 @@
 # AI Helper
 
+![AI Helper preview](pictures/app-preview.jpg)
+
 Simple AI helper utility for daily tasks.
 
 This utility is specifically designed to be used with global hotkeys, allowing you to quickly and easily find the answer 
