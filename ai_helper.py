@@ -96,16 +96,16 @@ class App(customtkinter.CTk):
             self.answer_button_event()
 
     def answer_button_event(self):
-        self.set_working_state('Working...')
+        self.set_working_state('Let me think...')
         self.execute_in_thread(lambda: self.SUPPORTED_ACTIONS[self.action](
             self.clip_text(str(self.textbox_question.get("0.0", "end")), self.MAX_SIZE)), ())
 
     def set_working_state(self, message):
-        self.answer_button.configure(state='disabled')
+        self.answer_button.configure(state=customtkinter.DISABLED, fg_color="#BB6464")
         self.info_label.configure(text=message)
 
     def unset_working_state(self, message):
-        self.answer_button.configure(state='normal')
+        self.answer_button.configure(state=customtkinter.NORMAL, fg_color=["#3B8ED0", "#1F6AA5"])
         self.info_label.configure(text=message)
 
     def quit(self):
