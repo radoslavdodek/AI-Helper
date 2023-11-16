@@ -52,7 +52,11 @@ class App(customtkinter.CTk):
         monospace_font = CTkFont(family="monospace", size=16, weight="normal")
 
         # configure window
-        self.title("AI Helper")
+        if self.action == 'Rewrite':
+            self.title("AI Rewriter")
+        else:
+            self.title("AI Helper")
+
         self.geometry(f"{1000}x{700}")
         self.iconphoto(False, PhotoImage(file=self.app_path / "assets/app-icon.png"))
 
