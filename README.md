@@ -55,7 +55,7 @@ To send this question to OpenAI, simply press `Ctrl+Enter`. The answer will be d
 ### Execute custom prompt
 
 This feature automatically loads and runs the last custom prompt you used.
-The custom prompt includes a placeholder (`{CLIPBOARD}`) that will be filled with whatever is currently copied to your
+The custom prompt can contain a placeholder (`{CLIPBOARD}`), which will be replaced with the contents of your current
 clipboard.
 
 Example custom prompt:
