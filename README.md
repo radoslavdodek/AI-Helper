@@ -4,9 +4,9 @@
 
 Simple AI helper utility for daily tasks.
 
-This utility is specifically designed to be used with global hotkeys, allowing you to quickly and easily find the answer 
-you need. By using your clipboard, you can speed up your workflow. Simply copy the text or concept you want to rephrase 
-or explain, and then press the global hotkey. The application will take the content from the clipboard as the input 
+This utility is specifically designed to be used with global hotkeys, allowing you to quickly and easily find the answer
+you need. By using your clipboard, you can speed up your workflow. Simply copy the text or concept you want to rephrase
+or explain, and then press the global hotkey. The application will take the content from the clipboard as the input
 and then copy the answer back to the clipboard.
 
 When you're using the application, simply press `Ctrl+Enter` in question field to get the answer.
@@ -52,3 +52,22 @@ To send this question to OpenAI, simply press `Ctrl+Enter`. The answer will be d
 |----------------|----------------------|----------------------------|---------------------------|
 | AI Helper: Ask | `Ctrl+Alt+Shift+F11` | `python3 ai_helper.py Ask` | Ask AI helper a question. |
 
+### Execute custom prompt
+
+This feature automatically loads and runs the last custom prompt you used.
+The custom prompt includes a placeholder (`{TEXT}`) that will be filled with whatever is currently copied to your
+clipboard.
+
+Example custom prompt:
+
+```
+Create a short summary of the following text:
+
+---
+{TEXT}
+---
+```
+
+| Name                    | Suggested shortcut   | Command                             | Description            |
+|-------------------------|----------------------|-------------------------------------|------------------------|
+| AI Helper: CustomPrompt | `Ctrl+Alt+Shift+F12` | `python3 ai_helper.py CustomPrompt` | Execute custom prompt. |
