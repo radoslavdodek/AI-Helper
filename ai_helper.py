@@ -1,4 +1,5 @@
 import errno
+import os
 import sys
 import threading
 from datetime import datetime
@@ -9,6 +10,9 @@ import customtkinter
 import pyperclip
 from customtkinter import CTkFont
 from openai import OpenAI
+
+CUSTOM_PROMPT_FILE_NAME = ".custom_prompt.txt"
+CUSTOM_PROMPT_TEXT_PLACEHOLDER = "{TEXT}"
 
 client = OpenAI()
 
@@ -22,7 +26,7 @@ default_model = 'gpt-4-1106-preview'
 def app_help():
     print("Usage:")
     print(" ", sys.argv[0], "<ACTION>")
-    print(" Supported actions: Rewrite, Ask")
+    print(" Supported actions: Rewrite, Ask, CustomPrompt")
 
 
 class App(customtkinter.CTk):
@@ -34,7 +38,8 @@ class App(customtkinter.CTk):
 
         self.SUPPORTED_ACTIONS = {
             "Rewrite": self.execute_rewrite,
-            "Ask": self.execute_ask_question
+            "Ask": self.execute_ask_question,
+            "CustomPrompt": self.execute_custom_prompt
         }
 
         if len(sys.argv) < 2:
@@ -68,7 +73,12 @@ class App(customtkinter.CTk):
         self.textbox_question.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
         # Question button
-        self.answer_button = customtkinter.CTkButton(master=self, text=self.action, command=self.answer_button_event)
+        question_button_title = self.action
+        if self.action == 'CustomPrompt':
+            question_button_title = 'Execute custom prompt'
+
+        self.answer_button = customtkinter.CTkButton(master=self, text=question_button_title,
+                                                     command=self.answer_button_event)
         self.answer_button.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
         # Label
@@ -80,10 +90,16 @@ class App(customtkinter.CTk):
         self.textbox_answer.grid(row=2, column=0, columnspan=2, sticky="nsew")
 
         # Initialize
-        self.question = pyperclip.paste()
+        self.user_input = pyperclip.paste()
+
         if self.action == 'Ask':
-            self.question = 'Explain: ' + self.question
-        self.textbox_question.insert("0.0", self.question)
+            self.user_input = 'Explain: ' + self.user_input
+
+        if self.action == 'CustomPrompt':
+            self.textbox_question.insert("0.0", self.get_custom_prompt())
+        else:
+            self.textbox_question.insert("0.0", self.user_input)
+
         self.textbox_question.focus_set()
 
         # Bind keyboard shortcuts
@@ -96,7 +112,9 @@ class App(customtkinter.CTk):
         self.textbox_answer.bind('<Escape>', lambda event: self.quit())
 
         # Initial execution at the startup
-        if self.action == 'Rewrite' and self.question is not None:
+        if self.action == 'Rewrite' and self.user_input is not None:
+            self.answer_button_event()
+        if self.action == 'CustomPrompt' and self.user_input is not None:
             self.answer_button_event()
 
     def answer_button_event(self):
@@ -119,7 +137,8 @@ class App(customtkinter.CTk):
         # Execute the prompt
         prompt = f"Please rewrite the following text for more clarity and make it grammatically correct. Give me the " \
                  f"updated text. The updated text should be correct grammatically and stylistically and should be " \
-                 f"easy to follow and understand. Only make a change if it's needed. " \
+                 f"easy to follow and understand. Only make a change if it's needed. Try to follow the style of the " \
+                 f"original text. " \
                  f"Don't make it too formal. Include only improved text no other " \
                  f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
 
@@ -153,6 +172,27 @@ class App(customtkinter.CTk):
 
         self.log_to_file('Question', question, result)
 
+    def execute_custom_prompt(self, question):
+        self.update_custom_prompt(question)
+
+        # Execute the prompt
+        custom_prompt = self.get_custom_prompt()
+        prompt = self.render_custom_prompt(custom_prompt, self.user_input)
+        print(prompt)
+        completion = client.chat.completions.create(
+            model=default_model, temperature=0,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        result = completion.choices[0].message.content
+
+        self.textbox_answer.delete("0.0", "end")
+        self.textbox_answer.insert("0.0", result)
+
+        self.info_label.configure(text='')
+        self.unset_working_state('')
+
+        self.log_to_file('CustomPrompt', prompt, result)
+
     def log_to_file(self, input_type, content, answer):
         log_file = self.app_path / "ai_helper.log"
         with open(log_file, 'a') as f:
@@ -160,6 +200,31 @@ class App(customtkinter.CTk):
             f.write(f'Date: {current_date}\n')
             f.write(f'{input_type}: {content}\n')
             f.write(f'Answer: {answer}\n---\n')
+
+    def get_custom_prompt(self):
+        custom_prompt_file = self.app_path / CUSTOM_PROMPT_FILE_NAME
+
+        if not os.path.exists(custom_prompt_file):
+            with open(custom_prompt_file, 'w') as f:
+                f.write(
+                    f"Create a concise summary of the following text:\n\n"
+                    f"```\n"
+                    f"{CUSTOM_PROMPT_TEXT_PLACEHOLDER}\n"
+                    f"```")
+
+        with open(custom_prompt_file, 'r') as file:
+            return file.read()
+
+    def update_custom_prompt(self, new_prompt):
+        custom_prompt_file = self.app_path / CUSTOM_PROMPT_FILE_NAME
+
+        with open(custom_prompt_file, 'w') as f:
+            if CUSTOM_PROMPT_TEXT_PLACEHOLDER not in new_prompt:
+                new_prompt = new_prompt + '\n\n' + CUSTOM_PROMPT_TEXT_PLACEHOLDER
+            f.write(new_prompt)
+
+    def render_custom_prompt(self, prompt, text):
+        return prompt.replace(CUSTOM_PROMPT_TEXT_PLACEHOLDER, text)
 
     @staticmethod
     def clip_text(text, max_size):
