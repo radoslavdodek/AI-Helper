@@ -12,7 +12,7 @@ from customtkinter import CTkFont
 from openai import OpenAI
 
 CUSTOM_PROMPT_FILE_NAME = ".custom_prompt.txt"
-CUSTOM_PROMPT_TEXT_PLACEHOLDER = "{TEXT}"
+CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
 
 client = OpenAI()
 
@@ -209,7 +209,7 @@ class App(customtkinter.CTk):
                 f.write(
                     f"Create a concise summary of the following text:\n\n"
                     f"```\n"
-                    f"{CUSTOM_PROMPT_TEXT_PLACEHOLDER}\n"
+                    f"{CLIPBOARD_PLACEHOLDER}\n"
                     f"```")
 
         with open(custom_prompt_file, 'r') as file:
@@ -219,12 +219,12 @@ class App(customtkinter.CTk):
         custom_prompt_file = self.app_path / CUSTOM_PROMPT_FILE_NAME
 
         with open(custom_prompt_file, 'w') as f:
-            if CUSTOM_PROMPT_TEXT_PLACEHOLDER not in new_prompt:
-                new_prompt = new_prompt + '\n\n' + CUSTOM_PROMPT_TEXT_PLACEHOLDER
+            if CLIPBOARD_PLACEHOLDER not in new_prompt:
+                new_prompt = new_prompt + '\n\n' + CLIPBOARD_PLACEHOLDER
             f.write(new_prompt)
 
     def render_custom_prompt(self, prompt, text):
-        return prompt.replace(CUSTOM_PROMPT_TEXT_PLACEHOLDER, text)
+        return prompt.replace(CLIPBOARD_PLACEHOLDER, text)
 
     @staticmethod
     def clip_text(text, max_size):
