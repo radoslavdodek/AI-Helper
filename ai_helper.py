@@ -177,7 +177,7 @@ class App(customtkinter.CTk):
 
         # Execute the prompt
         custom_prompt = self.get_custom_prompt()
-        prompt = self.render_custom_prompt(custom_prompt, self.user_input)
+        prompt = self.render_custom_prompt(custom_prompt, pyperclip.paste())
         print(prompt)
         completion = client.chat.completions.create(
             model=default_model, temperature=0,
