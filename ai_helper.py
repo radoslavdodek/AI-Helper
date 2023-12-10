@@ -135,12 +135,14 @@ class App(customtkinter.CTk):
 
     def execute_rewrite(self, text_to_rewrite):
         # Execute the prompt
-        prompt = f"Please rewrite the following text for more clarity and make it grammatically correct. Give me the " \
-                 f"updated text. The updated text should be correct grammatically and stylistically and should be " \
-                 f"easy to follow and understand. Only make a change if it's needed. Try to follow the style of the " \
-                 f"original text. " \
-                 f"Don't make it too formal. Include only improved text no other " \
-                 f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
+        prompt = (f"You are a professional editor, skilled at improving the clarity and concision of writing. "
+                  f"You can rephrase sentences to make them more effective, and you can add details to make them more "
+                  f"interesting. You can also correct any grammatical or spelling errors."
+                  f"Rewrite the text below to improve its writing quality, flow, readability and coherence. "
+                  f"Make sure to fix any grammar and spelling mistakes. Only make a change if it's needed. "
+                  f"Try to follow the style of the original text. Keep it casual yet warm and inviting. "
+                  f"Include only improved text no other commentary.\n\n"
+                  f"The text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: ")
 
         completion = client.chat.completions.create(
             model=default_model, temperature=1,
