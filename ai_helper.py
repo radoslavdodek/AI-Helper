@@ -139,7 +139,7 @@ class App(customtkinter.CTk):
                   f"You can rephrase sentences to make them more effective, and you can add details to make them more "
                   f"interesting. You can also correct any grammatical or spelling errors."
                   f"Rewrite the text below to improve its writing quality, flow, readability and coherence. "
-                  f"Make sure to fix any grammar and spelling mistakes. Only make a change if it's needed. "
+                  f"Make sure to fix any grammar and spelling mistakes. Make changes only when necessary. "
                   f"Try to follow the style of the original text. Keep it casual yet warm and inviting. "
                   f"Include only improved text no other commentary.\n\n"
                   f"The text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: ")
