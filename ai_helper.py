@@ -134,66 +134,76 @@ class App(customtkinter.CTk):
         self.destroy()
 
     def execute_rewrite(self, text_to_rewrite):
-        # Execute the prompt
-        prompt = (f"You are a professional editor, skilled at improving the clarity and concision of writing. "
-                  f"You can rephrase sentences to make them more effective, and you can add details to make them more "
-                  f"interesting. You can also correct any grammatical or spelling errors."
-                  f"Rewrite the text below to improve its writing quality, flow, readability and coherence. "
-                  f"Make sure to fix any grammar and spelling mistakes. Make changes only when necessary. "
-                  f"Try to follow the style of the original text. Keep it casual yet warm and inviting. "
-                  f"Include only improved text no other commentary.\n\n"
-                  f"The text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: ")
+        try:
+            # Execute the prompt
+            prompt = f"Please rewrite the following text for more clarity and make it grammatically correct. Give me the " \
+                     f"updated text. The updated text should be correct grammatically and stylistically and should be " \
+                     f"easy to follow and understand. Only make a change if it's needed. Try to follow the style of the " \
+                     f"original text. " \
+                     f"Don't make it too formal. Include only improved text no other " \
+                     f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
 
-        completion = client.chat.completions.create(
-            model=default_model, temperature=1,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        result = completion.choices[0].message.content
+            completion = client.chat.completions.create(
+                model=default_model, temperature=1,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            result = completion.choices[0].message.content
 
-        self.textbox_answer.delete("0.0", "end")
-        self.textbox_answer.insert("0.0", result)
+            self.textbox_answer.delete("0.0", "end")
+            self.textbox_answer.insert("0.0", result)
 
-        pyperclip.copy(result)
-        self.unset_working_state('Copied to clipboard')
+            pyperclip.copy(result)
+            self.unset_working_state('Copied to clipboard')
 
-        self.log_to_file('Rewrite', text_to_rewrite, result)
+            self.log_to_file('Rewrite', text_to_rewrite, result)
+        except Exception as e:
+            self.info_label.configure(text='Oops, something went wrong. Try again later.')
+            self.unset_working_state('')
 
     def execute_ask_question(self, question):
-        # Execute the prompt
-        completion = client.chat.completions.create(
-            model=default_model, temperature=0,
-            messages=[{"role": "user", "content": question}]
-        )
-        result = completion.choices[0].message.content
+        try:
+            # Execute the prompt
+            completion = client.chat.completions.create(
+                model=default_model, temperature=0,
+                messages=[{"role": "user", "content": question}]
+            )
+            result = completion.choices[0].message.content
 
-        self.textbox_answer.delete("0.0", "end")
-        self.textbox_answer.insert("0.0", result)
+            self.textbox_answer.delete("0.0", "end")
+            self.textbox_answer.insert("0.0", result)
 
-        self.info_label.configure(text='')
-        self.unset_working_state('')
+            self.info_label.configure(text='')
+            self.unset_working_state('')
 
-        self.log_to_file('Question', question, result)
+            self.log_to_file('Question', question, result)
+        except Exception as e:
+            self.info_label.configure(text='Oops, something went wrong. Try again later.')
+            self.unset_working_state('')
 
     def execute_custom_prompt(self, question):
-        self.update_custom_prompt(question)
+        try:
+            self.update_custom_prompt(question)
 
-        # Execute the prompt
-        custom_prompt = self.get_custom_prompt()
-        prompt = self.render_custom_prompt(custom_prompt, pyperclip.paste())
-        print(prompt)
-        completion = client.chat.completions.create(
-            model=default_model, temperature=0,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        result = completion.choices[0].message.content
+            # Execute the prompt
+            custom_prompt = self.get_custom_prompt()
+            prompt = self.render_custom_prompt(custom_prompt, pyperclip.paste())
+            print(prompt)
+            completion = client.chat.completions.create(
+                model=default_model, temperature=0,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            result = completion.choices[0].message.content
 
-        self.textbox_answer.delete("0.0", "end")
-        self.textbox_answer.insert("0.0", result)
+            self.textbox_answer.delete("0.0", "end")
+            self.textbox_answer.insert("0.0", result)
 
-        self.info_label.configure(text='')
-        self.unset_working_state('')
+            self.info_label.configure(text='')
+            self.unset_working_state('')
 
-        self.log_to_file('CustomPrompt', prompt, result)
+            self.log_to_file('CustomPrompt', prompt, result)
+        except Exception as e:
+            self.info_label.configure(text='Oops, something went wrong. Try again later.')
+            self.unset_working_state('')
 
     def log_to_file(self, input_type, content, answer):
         log_file = self.app_path / "ai_helper.log"
