@@ -144,7 +144,7 @@ class App(customtkinter.CTk):
                      f"commentary.\n\nThe text to check:\n---\n{text_to_rewrite}\n---\n\nImproved text: "
 
             completion = client.chat.completions.create(
-                model=default_model, temperature=1,
+                model=default_model, temperature=1, max_tokens=1000,
                 messages=[{"role": "user", "content": prompt}]
             )
             result = completion.choices[0].message.content
