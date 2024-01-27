@@ -1,12 +1,15 @@
 import errno
+import json
 import os
 import sys
+import textwrap
 import threading
 from datetime import datetime
 from pathlib import Path
 from tkinter import PhotoImage
 
 import customtkinter
+import httpx
 import pyperclip
 from customtkinter import CTkFont
 from openai import OpenAI
@@ -14,7 +17,40 @@ from openai import OpenAI
 CUSTOM_PROMPT_FILE_NAME = ".custom_prompt.txt"
 CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
 
-client = OpenAI()
+
+def log_http_request_response(response: httpx.Response):
+    request = response.request
+    print(f"Request: {request.method} {request.url}")
+    print("  Headers:")
+    for key, value in request.headers.items():
+        if key.lower() == "authorization":
+            value = "[...]"
+        if key.lower() == "cookie":
+            value = value.split("=")[0] + "=..."
+        print(f"    {key}: {value}")
+    print("  Body:")
+    try:
+        request_body = json.loads(request.content)
+        print(
+            textwrap.indent(
+                json.dumps(request_body, indent=2), "    "
+            )
+        )
+    except json.JSONDecodeError:
+        print(textwrap.indent(request.content.decode(), "    "))
+    print(f"Response: status_code={response.status_code}")
+    print("  Headers:")
+    for key, value in response.headers.items():
+        if key.lower() == "set-cookie":
+            value = value.split("=")[0] + "=..."
+        print(f"    {key}: {value}")
+
+
+client = (OpenAI(http_client=httpx.Client(
+    event_hooks={
+        "response": [log_http_request_response]
+    }
+)))
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("blue")
@@ -30,7 +66,7 @@ def app_help():
 
 
 class App(customtkinter.CTk):
-    MAX_SIZE = 1000
+    MAX_SIZE = 3000
 
     def __init__(self):
         super().__init__(className="AI Helper")
