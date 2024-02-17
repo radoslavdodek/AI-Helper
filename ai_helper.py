@@ -105,7 +105,7 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
 
-        self.textbox_question = customtkinter.CTkTextbox(self, font=monospace_font, height=150)
+        self.textbox_question = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, height=150)
         self.textbox_question.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
         # Question button
