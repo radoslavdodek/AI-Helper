@@ -122,7 +122,7 @@ class App(customtkinter.CTk):
         self.info_label.grid(row=1, column=1, padx=20, pady=(5, 5))
 
         # Answer textbox
-        self.textbox_answer = customtkinter.CTkTextbox(self, font=monospace_font)
+        self.textbox_answer = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font)
         self.textbox_answer.grid(row=2, column=0, columnspan=2, sticky="nsew")
 
         # Initialize
