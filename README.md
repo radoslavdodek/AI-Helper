@@ -1,6 +1,6 @@
 # AI Helper
 
-![AI Helper preview](pictures/app-preview.jpg)
+![AI Helper preview](pictures/app-preview.png)
 
 Simple AI helper utility for daily tasks.
 
