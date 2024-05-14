@@ -17,6 +17,9 @@ from openai import OpenAI
 CUSTOM_PROMPT_FILE_NAME = ".custom_prompt.txt"
 CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
 
+# See https://openai.com/blog/new-embedding-models-and-api-updates
+default_model = 'gpt-4o'
+
 
 def log_http_request_response(response: httpx.Response):
     request = response.request
@@ -54,9 +57,6 @@ client = (OpenAI(http_client=httpx.Client(
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("blue")
-
-# See https://openai.com/blog/new-embedding-models-and-api-updates
-default_model = 'gpt-4-turbo'
 
 
 def app_help():
