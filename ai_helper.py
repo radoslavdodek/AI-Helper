@@ -17,7 +17,7 @@ from openai import OpenAI
 CUSTOM_PROMPT_FILE_NAME = ".custom_prompt.txt"
 CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
 
-# See https://openai.com/blog/new-embedding-models-and-api-updates
+# See https://openai.com/index/spring-update
 default_model = 'gpt-4o'
 
 
