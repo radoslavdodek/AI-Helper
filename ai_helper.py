@@ -120,7 +120,7 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(2, weight=1)
 
         self.textbox_question = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, height=150)
-        self.textbox_question.grid(row=0, column=0, columnspan=2, sticky="nsew")
+        self.textbox_question.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
         self.answer_button = customtkinter.CTkButton(master=self, text=question_button_title,
                                                      command=self.answer_button_event)
@@ -130,9 +130,21 @@ class App(customtkinter.CTk):
         self.info_label = customtkinter.CTkLabel(self, text="", font=customtkinter.CTkFont(size=14, weight="bold"))
         self.info_label.grid(row=1, column=1, padx=20, pady=(5, 5))
 
+        # 'Copy to clipboard' button
+        self.copy_to_clipboard_button = customtkinter.CTkButton(master=self,
+                                                                state=customtkinter.DISABLED,
+                                                                text='',
+                                                                image=PhotoImage(file=self.app_path / "assets/copy-icon.png"),
+                                                                width=20,
+                                                                bg_color="transparent",
+                                                                fg_color="transparent",
+                                                                hover_color="#F0F0F0",
+                                                                command=self.copy_answer_to_clipboard)
+        self.copy_to_clipboard_button.grid(row=1, column=2, padx=5, pady=5, sticky="nsew")
+
         # Answer textbox
         self.textbox_answer = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font)
-        self.textbox_answer.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        self.textbox_answer.grid(row=2, column=0, columnspan=3, sticky="nsew")
 
         # Initialize
         self.user_input = pyperclip.paste()
@@ -162,6 +174,10 @@ class App(customtkinter.CTk):
         if self.action == 'CustomPrompt' and self.user_input is not None:
             self.answer_button_event()
 
+    def copy_answer_to_clipboard(self):
+        pyperclip.copy(self.textbox_answer.get("0.0", "end"))
+        self.info_label.configure(text='Copied to clipboard')
+
     def answer_button_event(self):
         self.set_working_state('Let me think...')
         self.execute_in_thread(lambda: self.SUPPORTED_ACTIONS[self.action](
@@ -173,6 +189,7 @@ class App(customtkinter.CTk):
 
     def unset_working_state(self, message):
         self.answer_button.configure(state=customtkinter.NORMAL, fg_color=["#3B8ED0", "#1F6AA5"])
+        self.copy_to_clipboard_button.configure(state=customtkinter.NORMAL)
         self.info_label.configure(text=message)
 
     def quit(self):
