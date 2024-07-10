@@ -6,6 +6,7 @@ import textwrap
 import threading
 from datetime import datetime
 from pathlib import Path
+from string import Template
 from tkinter import PhotoImage
 
 import customtkinter
@@ -14,7 +15,7 @@ import pyperclip
 from customtkinter import CTkFont
 from openai import OpenAI
 
-CUSTOM_PROMPT_FILE_NAME = ".custom_prompt.txt"
+CUSTOM_PROMPT_FILE_NAME_TEMPLATE = ".custom_prompt_${prompt_number}.txt"
 CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
 
 # See https://openai.com/index/spring-update
@@ -89,14 +90,27 @@ class App(customtkinter.CTk):
             app_help()
             sys.exit(errno.EPERM)
 
+        if len(sys.argv) > 2:
+            self.action_parameter = sys.argv[2]
+        else:
+            self.action_parameter = None
+
         # UI
         monospace_font = CTkFont(family="monospace", size=16, weight="normal")
 
         # configure window
         if self.action == 'Rewrite':
             self.title("AI Rewriter")
+        elif self.action == 'CustomPrompt':
+            prompt_number = self.get_custom_prompt_number(self.action_parameter)
+            self.title(f"AI Rewriter - Custom Prompt {prompt_number}")
         else:
             self.title("AI Helper")
+
+        # Question button
+        question_button_title = self.action
+        if self.action == 'CustomPrompt':
+            question_button_title = 'Execute custom prompt'
 
         self.geometry(f"{1000}x{700}")
         self.iconphoto(False, PhotoImage(file=self.app_path / "assets/app-icon.png"))
@@ -107,11 +121,6 @@ class App(customtkinter.CTk):
 
         self.textbox_question = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, height=150)
         self.textbox_question.grid(row=0, column=0, columnspan=2, sticky="nsew")
-
-        # Question button
-        question_button_title = self.action
-        if self.action == 'CustomPrompt':
-            question_button_title = 'Execute custom prompt'
 
         self.answer_button = customtkinter.CTkButton(master=self, text=question_button_title,
                                                      command=self.answer_button_event)
@@ -132,7 +141,7 @@ class App(customtkinter.CTk):
             self.user_input = 'Explain: ' + self.user_input
 
         if self.action == 'CustomPrompt':
-            self.textbox_question.insert("0.0", self.get_custom_prompt())
+            self.textbox_question.insert("0.0", self.get_custom_prompt(self.action_parameter))
         else:
             self.textbox_question.insert("0.0", self.user_input)
 
@@ -156,7 +165,7 @@ class App(customtkinter.CTk):
     def answer_button_event(self):
         self.set_working_state('Let me think...')
         self.execute_in_thread(lambda: self.SUPPORTED_ACTIONS[self.action](
-            self.clip_text(str(self.textbox_question.get("0.0", "end")), self.MAX_SIZE)), ())
+            self.clip_text(str(self.textbox_question.get("0.0", "end")), self.MAX_SIZE), self.action_parameter), ())
 
     def set_working_state(self, message):
         self.answer_button.configure(state=customtkinter.DISABLED, fg_color="#BB6464")
@@ -224,9 +233,9 @@ class App(customtkinter.CTk):
             self.info_label.configure(text='Oops, something went wrong. Try again later.')
             self.unset_working_state('')
 
-    def execute_custom_prompt(self, question):
+    def execute_custom_prompt(self, question, action_parameter):
         try:
-            self.update_custom_prompt(question)
+            self.update_custom_prompt(question, action_parameter)
 
             # Execute the prompt
             custom_prompt = self.get_custom_prompt()
@@ -257,8 +266,19 @@ class App(customtkinter.CTk):
             f.write(f'{input_type}: {content}\n')
             f.write(f'Answer: {answer}\n---\n')
 
-    def get_custom_prompt(self):
-        custom_prompt_file = self.app_path / CUSTOM_PROMPT_FILE_NAME
+    def get_custom_prompt_filename(self, prompt_number):
+        template = Template(CUSTOM_PROMPT_FILE_NAME_TEMPLATE)
+        return template.substitute(prompt_number=prompt_number)
+
+    def get_custom_prompt_number(self, action_parameter):
+        prompt_number = 1
+        if action_parameter is not None:
+            prompt_number = int(action_parameter)
+        return prompt_number
+
+    def get_custom_prompt(self, action_parameter=None):
+        custom_prompt_file = (
+                self.app_path / self.get_custom_prompt_filename(self.get_custom_prompt_number(action_parameter)))
 
         if not os.path.exists(custom_prompt_file):
             with open(custom_prompt_file, 'w') as f:
@@ -271,8 +291,9 @@ class App(customtkinter.CTk):
         with open(custom_prompt_file, 'r') as file:
             return file.read()
 
-    def update_custom_prompt(self, new_prompt):
-        custom_prompt_file = self.app_path / CUSTOM_PROMPT_FILE_NAME
+    def update_custom_prompt(self, new_prompt, action_parameter=None):
+        custom_prompt_file = (
+                self.app_path / self.get_custom_prompt_filename(self.get_custom_prompt_number(action_parameter)))
 
         with open(custom_prompt_file, 'w') as f:
             if CLIPBOARD_PLACEHOLDER not in new_prompt:

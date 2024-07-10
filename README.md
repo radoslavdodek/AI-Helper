@@ -68,6 +68,9 @@ Create a short summary of the following text:
 ---
 ```
 
-| Name                    | Suggested shortcut   | Command                             | Description            |
-|-------------------------|----------------------|-------------------------------------|------------------------|
-| AI Helper: CustomPrompt | `Ctrl+Alt+Shift+F12` | `python3 ai_helper.py CustomPrompt` | Execute custom prompt. |
+| Name                    | Suggested shortcut   | Command                               | Description            |
+|-------------------------|----------------------|---------------------------------------|------------------------|
+| AI Helper: CustomPrompt | `Ctrl+Alt+Shift+F12` | `python3 ai_helper.py CustomPrompt 1` | Execute custom prompt. |
+
+Note the number `1` in above command. This represents the prompt number. You can create as many custom prompts as you
+desire.
