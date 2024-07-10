@@ -238,7 +238,7 @@ class App(customtkinter.CTk):
             self.update_custom_prompt(question, action_parameter)
 
             # Execute the prompt
-            custom_prompt = self.get_custom_prompt()
+            custom_prompt = self.get_custom_prompt(action_parameter)
             prompt = self.render_custom_prompt(custom_prompt, pyperclip.paste())
             print(prompt)
             completion = client.chat.completions.create(
