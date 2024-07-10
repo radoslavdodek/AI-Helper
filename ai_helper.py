@@ -178,7 +178,7 @@ class App(customtkinter.CTk):
     def quit(self):
         self.destroy()
 
-    def execute_rewrite(self, text_to_rewrite):
+    def execute_rewrite(self, text_to_rewrite, _action_parameter):
         try:
             # Execute the prompt
             prompt = f"""
@@ -213,7 +213,7 @@ class App(customtkinter.CTk):
             self.info_label.configure(text='Oops, something went wrong. Try again later.')
             self.unset_working_state('')
 
-    def execute_ask_question(self, question):
+    def execute_ask_question(self, question, _action_parameter):
         try:
             # Execute the prompt
             completion = client.chat.completions.create(
