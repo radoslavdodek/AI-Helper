@@ -135,7 +135,7 @@ class App(customtkinter.CTk):
                                                                 state=customtkinter.DISABLED,
                                                                 text='',
                                                                 image=PhotoImage(file=self.app_path / "assets/copy-icon.png"),
-                                                                width=20,
+                                                                width=30,
                                                                 bg_color="transparent",
                                                                 fg_color="transparent",
                                                                 hover_color="#F0F0F0",
