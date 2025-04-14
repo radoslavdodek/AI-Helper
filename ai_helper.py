@@ -19,7 +19,7 @@ CUSTOM_PROMPT_FILE_NAME_TEMPLATE = ".custom_prompt_${prompt_number}.txt"
 CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
 
 # See https://openai.com/index/spring-update
-default_model = 'gpt-4o'
+default_model = 'gpt-4.1'
 
 
 def log_http_request_response(response: httpx.Response):
@@ -112,7 +112,7 @@ class App(customtkinter.CTk):
         if self.action == 'CustomPrompt':
             question_button_title = 'Execute custom prompt'
 
-        self.geometry(f"{1000}x{700}")
+        self.geometry(f"{800}x{1000}")
         self.iconphoto(False, PhotoImage(file=self.app_path / "assets/app-icon.png"))
 
         # configure grid layout
@@ -135,7 +135,7 @@ class App(customtkinter.CTk):
                                                                 state=customtkinter.DISABLED,
                                                                 text='',
                                                                 image=PhotoImage(file=self.app_path / "assets/copy-icon.png"),
-                                                                width=20,
+                                                                width=30,
                                                                 bg_color="transparent",
                                                                 fg_color="transparent",
                                                                 hover_color="#F0F0F0",
@@ -259,7 +259,7 @@ class App(customtkinter.CTk):
             prompt = self.render_custom_prompt(custom_prompt, pyperclip.paste())
             print(prompt)
             completion = client.chat.completions.create(
-                model=default_model, temperature=0,
+                model=default_model, temperature=0.8,
                 messages=[{"role": "user", "content": prompt}]
             )
             result = completion.choices[0].message.content
