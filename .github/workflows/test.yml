@@ -24,5 +24,7 @@ jobs:
         pip install -r requirements.txt
 
     - name: Test application imports
+      env:
+        OPENAI_API_KEY: "dummy-key-for-ci"
       run: |
         python -c "import ai_helper; print('All imports successful')" 
