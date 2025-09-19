@@ -15,6 +15,8 @@ import pyperclip
 from customtkinter import CTkFont
 from openai import OpenAI
 
+BG_COLOR = "#DBDBDB"
+
 CUSTOM_PROMPT_FILE_NAME_TEMPLATE = ".custom_prompt_${prompt_number}.txt"
 CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
 
@@ -114,12 +116,14 @@ class App(customtkinter.CTk):
 
         self.geometry(f"{800}x{1000}")
         self.iconphoto(False, PhotoImage(file=self.app_path / "assets/app-icon.png"))
+        # Set application background color
+        self.configure(fg_color=BG_COLOR)
 
         # configure grid layout
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
 
-        self.textbox_question = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, height=150)
+        self.textbox_question = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, height=150, fg_color=BG_COLOR)
         self.textbox_question.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
         self.answer_button = customtkinter.CTkButton(master=self, text=question_button_title,
@@ -143,7 +147,7 @@ class App(customtkinter.CTk):
         self.copy_to_clipboard_button.grid(row=1, column=2, padx=5, pady=5, sticky="nsew")
 
         # Answer textbox
-        self.textbox_answer = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font)
+        self.textbox_answer = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, fg_color=BG_COLOR)
         self.textbox_answer.grid(row=2, column=0, columnspan=3, sticky="nsew")
 
         # Initialize
@@ -214,7 +218,7 @@ class App(customtkinter.CTk):
                  """
 
             completion = client.chat.completions.create(
-                model=default_model, temperature=1, max_tokens=1000,
+                model=default_model, temperature=1, max_tokens=3000,
                 messages=[{"role": "user", "content": prompt}]
             )
             result = completion.choices[0].message.content
