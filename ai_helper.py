@@ -21,7 +21,7 @@ CUSTOM_PROMPT_FILE_NAME_TEMPLATE = ".custom_prompt_${prompt_number}.txt"
 CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
 
 # See https://openai.com/index/spring-update
-default_model = 'gpt-4.1'
+default_model = 'gpt-5.2'
 
 
 def log_http_request_response(response: httpx.Response):
