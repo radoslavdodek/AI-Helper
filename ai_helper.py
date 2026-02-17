@@ -209,10 +209,29 @@ class App(customtkinter.CTk):
 
     def set_working_state(self, message):
         self.answer_button.configure(state=customtkinter.DISABLED, fg_color="#7A7A7A")
-        self.info_label.configure(text=message)
+        self.info_label.configure(text='')
+        self._spinner_frames = ["   ", ".  ", ".. ", "..."]
+        self._spinner_index = 0
+        self._spinning = True
+        self._animate_spinner()
+
+    def _animate_spinner(self):
+        if not self._spinning:
+            return
+        frame = self._spinner_frames[self._spinner_index % len(self._spinner_frames)]
+        self.answer_button.configure(text=f"Thinking{frame}")
+        self._spinner_index += 1
+        self._spinner_after_id = self.after(400, self._animate_spinner)
 
     def unset_working_state(self, message):
-        self.answer_button.configure(state=customtkinter.NORMAL, fg_color="#2B7A4B")
+        self._spinning = False
+        if hasattr(self, '_spinner_after_id'):
+            self.after_cancel(self._spinner_after_id)
+        question_button_title = self.action
+        if self.action == 'CustomPrompt':
+            question_button_title = 'Execute custom prompt'
+        self.answer_button.configure(state=customtkinter.NORMAL, fg_color="#2B7A4B",
+                                     text=question_button_title)
         self.copy_to_clipboard_button.configure(state=customtkinter.NORMAL)
         self.info_label.configure(text=message)
 
