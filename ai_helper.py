@@ -140,8 +140,13 @@ class App(customtkinter.CTk):
         self.textbox_question.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
         self.answer_button = customtkinter.CTkButton(master=self, text=question_button_title,
+                                                     corner_radius=12,
+                                                     fg_color="#2B7A4B",
+                                                     hover_color="#236B3E",
+                                                     font=CTkFont(size=14, weight="bold"),
+                                                     height=36,
                                                      command=self.answer_button_event)
-        self.answer_button.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+        self.answer_button.grid(row=1, column=0, padx=8, pady=8, sticky="nsew")
 
         # Label
         self.info_label = customtkinter.CTkLabel(self, text="", font=customtkinter.CTkFont(size=14, weight="bold"))
@@ -152,12 +157,14 @@ class App(customtkinter.CTk):
                                                                 state=customtkinter.DISABLED,
                                                                 text='',
                                                                 image=CTkImage(light_image=Image.open(self.app_path / "assets/copy-icon.png"), size=(14, 14)),
-                                                                width=30,
+                                                                width=36,
+                                                                height=36,
+                                                                corner_radius=10,
                                                                 bg_color="transparent",
                                                                 fg_color="transparent",
-                                                                hover_color="#F0F0F0",
+                                                                hover_color="#CBCBCB",
                                                                 command=self.copy_answer_to_clipboard)
-        self.copy_to_clipboard_button.grid(row=1, column=2, padx=5, pady=5, sticky="nsew")
+        self.copy_to_clipboard_button.grid(row=1, column=2, padx=8, pady=8, sticky="nsew")
 
         # Answer textbox
         self.textbox_answer = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, fg_color=BG_COLOR)
@@ -201,11 +208,11 @@ class App(customtkinter.CTk):
             self.clip_text(str(self.textbox_question.get("0.0", "end")), self.MAX_SIZE), self.action_parameter), ())
 
     def set_working_state(self, message):
-        self.answer_button.configure(state=customtkinter.DISABLED, fg_color="#BB6464")
+        self.answer_button.configure(state=customtkinter.DISABLED, fg_color="#7A7A7A")
         self.info_label.configure(text=message)
 
     def unset_working_state(self, message):
-        self.answer_button.configure(state=customtkinter.NORMAL, fg_color=["#3B8ED0", "#1F6AA5"])
+        self.answer_button.configure(state=customtkinter.NORMAL, fg_color="#2B7A4B")
         self.copy_to_clipboard_button.configure(state=customtkinter.NORMAL)
         self.info_label.configure(text=message)
 
