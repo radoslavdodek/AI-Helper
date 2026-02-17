@@ -12,7 +12,8 @@ from tkinter import PhotoImage
 import customtkinter
 import httpx
 import pyperclip
-from customtkinter import CTkFont
+from customtkinter import CTkFont, CTkImage
+from PIL import Image
 from openai import OpenAI
 
 BG_COLOR = "#DBDBDB"
@@ -114,7 +115,7 @@ class App(customtkinter.CTk):
         if self.action == 'CustomPrompt':
             question_button_title = 'Execute custom prompt'
 
-        self.geometry(f"{800}x{1000}")
+        self.geometry(f"{615}x{1000}")
         self.iconphoto(False, PhotoImage(file=self.app_path / "assets/app-icon.png"))
         # Set application background color
         self.configure(fg_color=BG_COLOR)
@@ -138,7 +139,7 @@ class App(customtkinter.CTk):
         self.copy_to_clipboard_button = customtkinter.CTkButton(master=self,
                                                                 state=customtkinter.DISABLED,
                                                                 text='',
-                                                                image=PhotoImage(file=self.app_path / "assets/copy-icon.png"),
+                                                                image=CTkImage(light_image=Image.open(self.app_path / "assets/copy-icon.png"), size=(14, 14)),
                                                                 width=30,
                                                                 bg_color="transparent",
                                                                 fg_color="transparent",
@@ -270,6 +271,9 @@ class App(customtkinter.CTk):
 
             self.textbox_answer.delete("0.0", "end")
             self.textbox_answer.insert("0.0", result)
+            print('-------')
+            print(result)
+            print('-------')
 
             self.info_label.configure(text='')
             self.unset_working_state('')
