@@ -132,28 +132,30 @@ class App(customtkinter.CTk):
         # Set application background color
         self.configure(fg_color=BG_COLOR)
 
-        # configure grid layout
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1)
-
+        # Question textbox
         self.textbox_question = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, height=150, fg_color=BG_COLOR)
-        self.textbox_question.grid(row=0, column=0, columnspan=3, sticky="nsew")
+        self.textbox_question.pack(fill="x")
 
-        self.answer_button = customtkinter.CTkButton(master=self, text=question_button_title,
+        # Button bar
+        button_frame = customtkinter.CTkFrame(self, fg_color=BG_COLOR)
+        button_frame.pack(fill="x")
+        button_frame.grid_columnconfigure(0, weight=1)
+
+        self.answer_button = customtkinter.CTkButton(master=button_frame, text=question_button_title,
                                                      corner_radius=12,
                                                      fg_color="#2B7A4B",
                                                      hover_color="#236B3E",
                                                      font=CTkFont(size=14, weight="bold"),
                                                      height=36,
                                                      command=self.answer_button_event)
-        self.answer_button.grid(row=1, column=0, padx=8, pady=8, sticky="nsew")
+        self.answer_button.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
 
         # Label
-        self.info_label = customtkinter.CTkLabel(self, text="", font=customtkinter.CTkFont(size=14, weight="bold"))
-        self.info_label.grid(row=1, column=1, padx=20, pady=(5, 5))
+        self.info_label = customtkinter.CTkLabel(button_frame, text="", font=customtkinter.CTkFont(size=14, weight="bold"))
+        self.info_label.grid(row=0, column=1, padx=20, pady=(5, 5))
 
         # 'Copy to clipboard' button
-        self.copy_to_clipboard_button = customtkinter.CTkButton(master=self,
+        self.copy_to_clipboard_button = customtkinter.CTkButton(master=button_frame,
                                                                 state=customtkinter.DISABLED,
                                                                 text='',
                                                                 image=CTkImage(light_image=Image.open(self.app_path / "assets/copy-icon.png"), size=(14, 14)),
@@ -164,11 +166,17 @@ class App(customtkinter.CTk):
                                                                 fg_color="transparent",
                                                                 hover_color="#CBCBCB",
                                                                 command=self.copy_answer_to_clipboard)
-        self.copy_to_clipboard_button.grid(row=1, column=2, padx=8, pady=8, sticky="nsew")
+        self.copy_to_clipboard_button.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
+
+        # Drag handle (resizable split pane separator)
+        self._drag_handle = customtkinter.CTkFrame(self, height=6, fg_color="#C0C0C0", cursor="sb_v_double_arrow")
+        self._drag_handle.pack(fill="x")
+        self._drag_handle.bind("<ButtonPress-1>", self._on_sash_press)
+        self._drag_handle.bind("<B1-Motion>", self._on_sash_drag)
 
         # Answer textbox
         self.textbox_answer = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, fg_color=BG_COLOR)
-        self.textbox_answer.grid(row=2, column=0, columnspan=3, sticky="nsew")
+        self.textbox_answer.pack(fill="both", expand=True)
 
         # Initialize
         self.user_input = pyperclip.paste()
@@ -222,6 +230,16 @@ class App(customtkinter.CTk):
         self.answer_button.configure(text=f"Thinking{frame}")
         self._spinner_index += 1
         self._spinner_after_id = self.after(400, self._animate_spinner)
+
+    def _on_sash_press(self, event):
+        self._drag_start_y = event.y_root
+        self._drag_start_height = self.textbox_question.winfo_height()
+
+    def _on_sash_drag(self, event):
+        delta = event.y_root - self._drag_start_y
+        new_height = self._drag_start_height + delta
+        new_height = max(50, min(new_height, self.winfo_height() - 150))
+        self.textbox_question.configure(height=new_height)
 
     def unset_working_state(self, message):
         self._spinning = False
