@@ -200,6 +200,7 @@ class App(QMainWindow):
 
         # Fonts
         mono_font = QFont("monospace", 13)
+        input_font = QFont("monospace", 10)
 
         # Signals for thread-safe UI updates
         self._signals = WorkerSignals()
@@ -220,7 +221,7 @@ class App(QMainWindow):
 
         # Question text area
         self.textbox_question = QTextEdit()
-        self.textbox_question.setFont(mono_font)
+        self.textbox_question.setFont(input_font)
         self.textbox_question.setPlaceholderText("Enter your text here...")
         self.textbox_question.setAcceptRichText(False)
         self.textbox_question.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
