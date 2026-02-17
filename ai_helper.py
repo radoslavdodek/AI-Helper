@@ -1,10 +1,11 @@
 import errno
 import json
+import logging
 import os
 import sys
 import textwrap
 import threading
-from datetime import datetime
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from string import Template
 from tkinter import PhotoImage
@@ -23,6 +24,17 @@ CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
 
 # See https://openai.com/index/spring-update
 default_model = 'gpt-5.2'
+
+APP_PATH = Path(__file__).resolve().parent
+
+# Rotating log: 5 MB per file, keep 3 backups (up to 20 MB total)
+_log_handler = RotatingFileHandler(
+    APP_PATH / "ai_helper.log", maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+)
+_log_handler.setFormatter(logging.Formatter("%(asctime)s\n%(message)s\n---"))
+logger = logging.getLogger("ai_helper")
+logger.setLevel(logging.INFO)
+logger.addHandler(_log_handler)
 
 
 def log_http_request_response(response: httpx.Response):
@@ -74,7 +86,7 @@ class App(customtkinter.CTk):
 
     def __init__(self):
         super().__init__(className="AI Helper")
-        self.app_path = Path(__file__).resolve().parent
+        self.app_path = APP_PATH
 
         self.SUPPORTED_ACTIONS = {
             "Rewrite": self.execute_rewrite,
@@ -284,12 +296,7 @@ class App(customtkinter.CTk):
             self.unset_working_state('')
 
     def log_to_file(self, input_type, content, answer):
-        log_file = self.app_path / "ai_helper.log"
-        with open(log_file, 'a') as f:
-            current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f'Date: {current_date}\n')
-            f.write(f'{input_type}: {content}\n')
-            f.write(f'Answer: {answer}\n---\n')
+        logger.info("%s: %s\nAnswer: %s", input_type, content, answer)
 
     def get_custom_prompt_filename(self, prompt_number):
         template = Template(CUSTOM_PROMPT_FILE_NAME_TEMPLATE)
