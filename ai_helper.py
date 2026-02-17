@@ -8,16 +8,16 @@ import threading
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from string import Template
-from tkinter import PhotoImage
 
-import customtkinter
 import httpx
 import pyperclip
-from customtkinter import CTkFont, CTkImage
-from PIL import Image
 from openai import OpenAI
-
-BG_COLOR = "#DBDBDB"
+from PySide6.QtCore import Qt, Signal, QObject, QTimer
+from PySide6.QtGui import QFont, QIcon, QKeySequence, QShortcut
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QTextEdit, QPushButton, QLabel,
+    QHBoxLayout, QVBoxLayout, QWidget, QSplitter, QSizePolicy,
+)
 
 CUSTOM_PROMPT_FILE_NAME_TEMPLATE = ".custom_prompt_${prompt_number}.txt"
 CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
@@ -71,9 +71,6 @@ client = (OpenAI(http_client=httpx.Client(
     }
 )))
 
-customtkinter.set_appearance_mode("System")
-customtkinter.set_default_color_theme("blue")
-
 
 def app_help():
     print("Usage:")
@@ -81,11 +78,84 @@ def app_help():
     print(" Supported actions: Rewrite, Ask, CustomPrompt")
 
 
-class App(customtkinter.CTk):
+STYLESHEET = """
+QMainWindow {
+    background-color: #f5f5f7;
+}
+QTextEdit {
+    background-color: #ffffff;
+    color: #1d1d1f;
+    border: 1px solid #d2d2d7;
+    border-radius: 8px;
+    padding: 10px;
+    selection-background-color: #b4d7ff;
+    selection-color: #1d1d1f;
+}
+QTextEdit:focus {
+    border: 1px solid #34a853;
+}
+QPushButton#actionButton {
+    background-color: #34a853;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+QPushButton#actionButton:hover {
+    background-color: #2d9249;
+}
+QPushButton#actionButton:pressed {
+    background-color: #267a3e;
+}
+QPushButton#actionButton:disabled {
+    background-color: #d2d2d7;
+    color: #86868b;
+}
+QPushButton#copyButton {
+    background-color: transparent;
+    border: 1px solid #d2d2d7;
+    border-radius: 8px;
+    padding: 6px;
+    color: #86868b;
+    font-size: 16px;
+}
+QPushButton#copyButton:hover {
+    background-color: #e8e8ed;
+    color: #1d1d1f;
+}
+QPushButton#copyButton:disabled {
+    color: #d2d2d7;
+    border-color: #e8e8ed;
+}
+QLabel#infoLabel {
+    color: #6e6e73;
+    font-size: 13px;
+    font-weight: bold;
+}
+QSplitter::handle {
+    background-color: #d2d2d7;
+    height: 4px;
+    border-radius: 2px;
+    margin: 2px 40px;
+}
+QSplitter::handle:hover {
+    background-color: #34a853;
+}
+"""
+
+
+class WorkerSignals(QObject):
+    finished = Signal(str, str)
+    error = Signal()
+
+
+class App(QMainWindow):
     MAX_SIZE = 3000
 
     def __init__(self):
-        super().__init__(className="AI Helper")
+        super().__init__()
         self.app_path = APP_PATH
 
         self.SUPPORTED_ACTIONS = {
@@ -110,167 +180,184 @@ class App(customtkinter.CTk):
         else:
             self.action_parameter = None
 
-        # UI
-        monospace_font = CTkFont(family="monospace", size=16, weight="normal")
-
-        # configure window
+        # Window title
         if self.action == 'Rewrite':
-            self.title("AI Rewriter")
+            self.setWindowTitle("AI Rewriter")
         elif self.action == 'CustomPrompt':
             prompt_number = self.get_custom_prompt_number(self.action_parameter)
-            self.title(f"AI Rewriter - Custom Prompt {prompt_number}")
+            self.setWindowTitle(f"AI Rewriter - Custom Prompt {prompt_number}")
         else:
-            self.title("AI Helper")
+            self.setWindowTitle("AI Helper")
 
-        # Question button
-        question_button_title = self.action
+        self.setWindowIcon(QIcon(str(self.app_path / "assets/app-icon.png")))
+        self.resize(650, 900)
+        self.setStyleSheet(STYLESHEET)
+
+        # Button title
+        self._button_title = self.action
         if self.action == 'CustomPrompt':
-            question_button_title = 'Execute custom prompt'
+            self._button_title = 'Execute custom prompt'
 
-        self.geometry(f"{615}x{1000}")
-        self.iconphoto(False, PhotoImage(file=self.app_path / "assets/app-icon.png"))
-        # Set application background color
-        self.configure(fg_color=BG_COLOR)
+        # Fonts
+        mono_font = QFont("monospace", 13)
 
-        # Question textbox
-        self.textbox_question = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, height=150, fg_color=BG_COLOR)
-        self.textbox_question.pack(fill="x")
+        # Signals for thread-safe UI updates
+        self._signals = WorkerSignals()
+        self._signals.finished.connect(self._on_work_finished)
+        self._signals.error.connect(self._on_work_error)
 
-        # Button bar
-        button_frame = customtkinter.CTkFrame(self, fg_color=BG_COLOR)
-        button_frame.pack(fill="x")
-        button_frame.grid_columnconfigure(0, weight=1)
+        # Central widget
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(0)
 
-        self.answer_button = customtkinter.CTkButton(master=button_frame, text=question_button_title,
-                                                     corner_radius=12,
-                                                     fg_color="#2B7A4B",
-                                                     hover_color="#236B3E",
-                                                     font=CTkFont(size=14, weight="bold"),
-                                                     height=36,
-                                                     command=self.answer_button_event)
-        self.answer_button.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
+        # Splitter for question/answer
+        splitter = QSplitter(Qt.Vertical)
+        splitter.setHandleWidth(8)
+        splitter.setChildrenCollapsible(False)
 
-        # Label
-        self.info_label = customtkinter.CTkLabel(button_frame, text="", font=customtkinter.CTkFont(size=14, weight="bold"))
-        self.info_label.grid(row=0, column=1, padx=20, pady=(5, 5))
+        # Question text area
+        self.textbox_question = QTextEdit()
+        self.textbox_question.setFont(mono_font)
+        self.textbox_question.setPlaceholderText("Enter your text here...")
+        self.textbox_question.setAcceptRichText(False)
+        self.textbox_question.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # 'Copy to clipboard' button
-        self.copy_to_clipboard_button = customtkinter.CTkButton(master=button_frame,
-                                                                state=customtkinter.DISABLED,
-                                                                text='',
-                                                                image=CTkImage(light_image=Image.open(self.app_path / "assets/copy-icon.png"), size=(14, 14)),
-                                                                width=36,
-                                                                height=36,
-                                                                corner_radius=10,
-                                                                bg_color="transparent",
-                                                                fg_color="transparent",
-                                                                hover_color="#CBCBCB",
-                                                                command=self.copy_answer_to_clipboard)
-        self.copy_to_clipboard_button.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
+        # Answer text area
+        self.textbox_answer = QTextEdit()
+        self.textbox_answer.setFont(mono_font)
+        self.textbox_answer.setReadOnly(True)
+        self.textbox_answer.setPlaceholderText("Answer will appear here...")
+        self.textbox_answer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # Drag handle (resizable split pane separator)
-        self._drag_handle = customtkinter.CTkFrame(self, height=6, fg_color="#C0C0C0", cursor="sb_v_double_arrow")
-        self._drag_handle.pack(fill="x")
-        self._drag_handle.bind("<ButtonPress-1>", self._on_sash_press)
-        self._drag_handle.bind("<B1-Motion>", self._on_sash_drag)
+        # Button bar (between the two text areas, outside the splitter)
+        button_bar = QHBoxLayout()
+        button_bar.setContentsMargins(0, 8, 0, 8)
+        button_bar.setSpacing(8)
 
-        # Answer textbox
-        self.textbox_answer = customtkinter.CTkTextbox(self, wrap=customtkinter.WORD, font=monospace_font, fg_color=BG_COLOR)
-        self.textbox_answer.pack(fill="both", expand=True)
+        self.answer_button = QPushButton(self._button_title)
+        self.answer_button.setObjectName("actionButton")
+        self.answer_button.setCursor(Qt.PointingHandCursor)
+        self.answer_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.answer_button.setFixedHeight(38)
+        self.answer_button.clicked.connect(self.answer_button_event)
 
-        # Initialize
+        self.info_label = QLabel("")
+        self.info_label.setObjectName("infoLabel")
+
+        self.copy_button = QPushButton("\u2398")
+        self.copy_button.setObjectName("copyButton")
+        self.copy_button.setCursor(Qt.PointingHandCursor)
+        self.copy_button.setFixedSize(38, 38)
+        self.copy_button.setEnabled(False)
+        self.copy_button.clicked.connect(self.copy_answer_to_clipboard)
+        self.copy_button.setToolTip("Copy to clipboard")
+
+        button_bar.addWidget(self.answer_button)
+        button_bar.addWidget(self.info_label)
+        button_bar.addWidget(self.copy_button)
+
+        button_bar_widget = QWidget()
+        button_bar_widget.setLayout(button_bar)
+
+        # Assemble layout: question + button bar in a top container
+        top_widget = QWidget()
+        top_layout = QVBoxLayout(top_widget)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(0)
+        top_layout.addWidget(self.textbox_question, 1)
+        top_layout.addWidget(button_bar_widget, 0)
+
+        splitter.addWidget(top_widget)
+        splitter.addWidget(self.textbox_answer)
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 3)
+
+        layout.addWidget(splitter, 1)
+
+        # Keyboard shortcuts
+        shortcut_submit = QShortcut(QKeySequence("Ctrl+Return"), self)
+        shortcut_submit.activated.connect(self.answer_button_event)
+
+        shortcut_escape = QShortcut(QKeySequence("Escape"), self)
+        shortcut_escape.activated.connect(self.close)
+
+        # Spinner timer
+        self._spinner_frames = ["   ", ".  ", ".. ", "..."]
+        self._spinner_index = 0
+        self._spinner_timer = QTimer(self)
+        self._spinner_timer.timeout.connect(self._animate_spinner)
+
+        # Initialize clipboard content
         self.user_input = pyperclip.paste()
 
         if self.action == 'Ask':
             self.user_input = 'Explain: ' + self.user_input
 
         if self.action == 'CustomPrompt':
-            self.textbox_question.insert("0.0", self.get_custom_prompt(self.action_parameter))
+            self.textbox_question.setPlainText(self.get_custom_prompt(self.action_parameter))
         else:
-            self.textbox_question.insert("0.0", self.user_input)
+            self.textbox_question.setPlainText(self.user_input)
 
-        self.textbox_question.focus_set()
+        self.textbox_question.setFocus()
 
-        # Bind keyboard shortcuts
-        self.textbox_question.bind(
-            '<Control_L><Return>',
-            # Return value "break" means that the event should not be processed by the default handler
-            lambda event: "break" if self.answer_button_event() is None else None
-        )
-        self.textbox_question.bind('<Escape>', lambda event: self.quit())
-        self.textbox_answer.bind('<Escape>', lambda event: self.quit())
-
-        # Initial execution at the startup
-        if self.action == 'Rewrite' and self.user_input is not None:
-            self.answer_button_event()
-        if self.action == 'CustomPrompt' and self.user_input is not None:
-            self.answer_button_event()
+        # Auto-execute for Rewrite and CustomPrompt
+        if self.action in ('Rewrite', 'CustomPrompt') and self.user_input is not None:
+            QTimer.singleShot(0, self.answer_button_event)
 
     def copy_answer_to_clipboard(self):
-        pyperclip.copy(self.textbox_answer.get("0.0", "end"))
-        self.info_label.configure(text='Copied to clipboard')
+        pyperclip.copy(self.textbox_answer.toPlainText())
+        self.info_label.setText('Copied to clipboard')
 
     def answer_button_event(self):
-        self.set_working_state('Let me think...')
-        self.execute_in_thread(lambda: self.SUPPORTED_ACTIONS[self.action](
-            self.clip_text(str(self.textbox_question.get("0.0", "end")), self.MAX_SIZE), self.action_parameter), ())
+        self.set_working_state()
+        question_text = self.clip_text(self.textbox_question.toPlainText(), self.MAX_SIZE)
+        action_fn = self.SUPPORTED_ACTIONS[self.action]
+        thread = threading.Thread(target=action_fn, args=(question_text, self.action_parameter))
+        thread.start()
 
-    def set_working_state(self, message):
-        self.answer_button.configure(state=customtkinter.DISABLED, fg_color="#7A7A7A")
-        self.info_label.configure(text='')
-        self._spinner_frames = ["   ", ".  ", ".. ", "..."]
+    def set_working_state(self):
+        self.answer_button.setEnabled(False)
+        self.info_label.setText('')
         self._spinner_index = 0
-        self._spinning = True
+        self._spinner_timer.start(400)
         self._animate_spinner()
 
     def _animate_spinner(self):
-        if not self._spinning:
-            return
         frame = self._spinner_frames[self._spinner_index % len(self._spinner_frames)]
-        self.answer_button.configure(text=f"Thinking{frame}")
+        self.answer_button.setText(f"Thinking{frame}")
         self._spinner_index += 1
-        self._spinner_after_id = self.after(400, self._animate_spinner)
 
-    def _on_sash_press(self, event):
-        self._drag_start_y = event.y_root
-        self._drag_start_height = self.textbox_question.winfo_height()
+    def _on_work_finished(self, result, info_message):
+        self._spinner_timer.stop()
+        self.textbox_answer.setPlainText(result)
+        self.answer_button.setEnabled(True)
+        self.answer_button.setText(self._button_title)
+        self.copy_button.setEnabled(True)
+        self.info_label.setText(info_message)
 
-    def _on_sash_drag(self, event):
-        delta = event.y_root - self._drag_start_y
-        new_height = self._drag_start_height + delta
-        new_height = max(50, min(new_height, self.winfo_height() - 150))
-        self.textbox_question.configure(height=new_height)
-
-    def unset_working_state(self, message):
-        self._spinning = False
-        if hasattr(self, '_spinner_after_id'):
-            self.after_cancel(self._spinner_after_id)
-        question_button_title = self.action
-        if self.action == 'CustomPrompt':
-            question_button_title = 'Execute custom prompt'
-        self.answer_button.configure(state=customtkinter.NORMAL, fg_color="#2B7A4B",
-                                     text=question_button_title)
-        self.copy_to_clipboard_button.configure(state=customtkinter.NORMAL)
-        self.info_label.configure(text=message)
-
-    def quit(self):
-        self.destroy()
+    def _on_work_error(self):
+        self._spinner_timer.stop()
+        self.answer_button.setEnabled(True)
+        self.answer_button.setText(self._button_title)
+        self.info_label.setText('Oops, something went wrong. Try again later.')
 
     def execute_rewrite(self, text_to_rewrite, _action_parameter):
         try:
-            # Execute the prompt
             prompt = f"""
-                 Please rewrite the following text for more clarity and make it grammatically correct. 
+                 Please rewrite the following text for more clarity and make it grammatically correct.
                  Give me the updated text. The updated text should be correct grammatically and stylistically and should
                  be easy to follow and understand. Only make a change if it's needed. Try to follow the style of the
                  original text.
                  Don't make it too formal or academic. Include only improved text no other commentary.
- 
+
                  The text to check:
                  ---
                  {text_to_rewrite}
                  ---
-                 
+
                  Improved text:
                  """
 
@@ -280,42 +367,29 @@ class App(customtkinter.CTk):
             )
             result = completion.choices[0].message.content
 
-            self.textbox_answer.delete("0.0", "end")
-            self.textbox_answer.insert("0.0", result)
-
             pyperclip.copy(result)
-            self.unset_working_state('Copied to clipboard')
-
+            self._signals.finished.emit(result, 'Copied to clipboard')
             self.log_to_file('Rewrite', text_to_rewrite, result)
-        except Exception as e:
-            self.info_label.configure(text='Oops, something went wrong. Try again later.')
-            self.unset_working_state('')
+        except Exception:
+            self._signals.error.emit()
 
     def execute_ask_question(self, question, _action_parameter):
         try:
-            # Execute the prompt
             completion = client.chat.completions.create(
                 model=default_model, temperature=0,
                 messages=[{"role": "user", "content": question}]
             )
             result = completion.choices[0].message.content
 
-            self.textbox_answer.delete("0.0", "end")
-            self.textbox_answer.insert("0.0", result)
-
-            self.info_label.configure(text='')
-            self.unset_working_state('')
-
+            self._signals.finished.emit(result, '')
             self.log_to_file('Question', question, result)
-        except Exception as e:
-            self.info_label.configure(text='Oops, something went wrong. Try again later.')
-            self.unset_working_state('')
+        except Exception:
+            self._signals.error.emit()
 
     def execute_custom_prompt(self, question, action_parameter):
         try:
             self.update_custom_prompt(question, action_parameter)
 
-            # Execute the prompt
             custom_prompt = self.get_custom_prompt(action_parameter)
             prompt = self.render_custom_prompt(custom_prompt, pyperclip.paste())
             print(prompt)
@@ -324,20 +398,14 @@ class App(customtkinter.CTk):
                 messages=[{"role": "user", "content": prompt}]
             )
             result = completion.choices[0].message.content
-
-            self.textbox_answer.delete("0.0", "end")
-            self.textbox_answer.insert("0.0", result)
             print('-------')
             print(result)
             print('-------')
 
-            self.info_label.configure(text='')
-            self.unset_working_state('')
-
+            self._signals.finished.emit(result, '')
             self.log_to_file('CustomPrompt', prompt, result)
-        except Exception as e:
-            self.info_label.configure(text='Oops, something went wrong. Try again later.')
-            self.unset_working_state('')
+        except Exception:
+            self._signals.error.emit()
 
     def log_to_file(self, input_type, content, answer):
         logger.info("%s: %s\nAnswer: %s", input_type, content, answer)
@@ -389,12 +457,9 @@ class App(customtkinter.CTk):
         else:
             return text.strip()
 
-    @staticmethod
-    def execute_in_thread(callback, args):
-        thread = threading.Thread(target=callback, args=args)
-        thread.start()
-
 
 if __name__ == "__main__":
+    qt_app = QApplication(sys.argv)
     app = App()
-    app.mainloop()
+    app.show()
+    sys.exit(qt_app.exec())
