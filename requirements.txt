@@ -1,5 +1,5 @@
 PySide6==6.8.3
-openai==2.21.0
+openai==2.24.0
 pyperclip==1.11.0
 packaging==26.0
 httpx==0.28.1
