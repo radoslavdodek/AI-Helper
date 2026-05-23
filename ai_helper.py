@@ -23,7 +23,7 @@ CUSTOM_PROMPT_FILE_NAME_TEMPLATE = ".custom_prompt_${prompt_number}.txt"
 CLIPBOARD_PLACEHOLDER = "{CLIPBOARD}"
 
 # See https://openai.com/index/spring-update
-default_model = 'gpt-5.2'
+default_model = 'gpt-5.4'
 
 APP_PATH = Path(__file__).resolve().parent
 
@@ -363,7 +363,7 @@ class App(QMainWindow):
                  """
 
             completion = client.chat.completions.create(
-                model=default_model, temperature=1, max_tokens=3000,
+                model=default_model, temperature=1, max_completion_tokens=3000,
                 messages=[{"role": "user", "content": prompt}]
             )
             result = completion.choices[0].message.content
