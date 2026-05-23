@@ -17,6 +17,17 @@ If you want to exit the application, just press `ESC`.
 - Python 3.7.1 or higher
 - OpenAI API key. Set the key in the `OPENAI_API_KEY` environment variable.
 
+## Create and activate Python environment
+
+```bash
+python3 -m venv .venv
+```
+
+```bash
+source .venv/bin/activate
+```
+
+
 ## Install dependencies
 
 ```bash
